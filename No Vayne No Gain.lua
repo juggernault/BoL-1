@@ -4,7 +4,6 @@
     Version: 1.4
     
     Features:
-    
         - Combo Mode:
             - Uses Q in combo
             - Uses R in combo
