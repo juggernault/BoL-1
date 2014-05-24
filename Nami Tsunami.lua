@@ -101,21 +101,21 @@ end
 
 function harass()
     if Menu.NamiHarass.QHarass then
-        AddTickCallback(UseQ)
+        UseQ()
     end
 
     if Menu.NamiHarass.WHarass then
-        AddTickCallback(UseW)
+        UseW()
     end
 end
 
 function autoharass()
-    if Menu.NamiHarass.QHarass then
-        AddTickCallback(UseQ)
+   if Menu.NamiHarass.QHarass then
+        UseQ()
     end
 
     if Menu.NamiHarass.WHarass then
-        AddTickCallback(UseW)
+        UseW()
     end
 end
 
@@ -134,10 +134,12 @@ function AutoLevel()
 end
 
 function Combobombo()
-    AddTickCallback(UseR)
-    AddTickCallback(UseQ)
-    AddTickCallback(UseE)
-    AddTickCallback(UseW)
+    if Menu.NamiCombo.combo then
+        UseR()
+        UseQ()
+        UseE()
+        UseW()
+    end
 end
 
 function UseR()
