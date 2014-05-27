@@ -63,6 +63,10 @@ function OnLoad()
     Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
     Menu.Ads:addParam("AutoLevelspells", "Auto-Level Spells", SCRIPT_PARAM_ONOFF, false)
 
+    Menu:addSubMenu("["..myHero.charName.." - Wall Tumble]", "WallT") -- Credits Jire
+    Menu.WallT:addParam("midwall", "Mid Wall Key", SCRIPT_PARAM_ONKEYDOWN, false, 56)
+    Menu.WallT:addParam("drakewall", "Drake Wall Key", SCRIPT_PARAM_ONKEYDOWN, false, 57)
+
     Menu:addSubMenu("["..myHero.charName.." - Condemn]", "Condemn")
 
     Menu.Condemn:addSubMenu("Features & Settings", "settingsSubMenu")
@@ -125,6 +129,32 @@ function OnTick()
     if Menu.Ads.AutoLevelspells then
         AutoLevel()
     end
+
+    if Menu.WallT.drakewall then
+        DrakeWall()
+    end
+
+    if Menu.WallT.midwall then
+        MidWall()
+    end
+end
+
+function DrakeWall()
+     if Menu.WallT.drakewall and myHero.x < 11540 or myHero.x > 11600 or myHero.z < 4638 or myHero.z > 4712 then
+      myHero:MoveTo(11590.95, 4656.26)
+    else
+      myHero:MoveTo(11590.95, 4656.26)
+      CastSpell(_Q, 11334.74, 4517.47)
+    end
+end
+
+function MidWall()
+    if Menu.WallT.midwall and myHero.x < 6600 or myHero.x > 6660 or myHero.z < 8630 or myHero.z > 8680 then
+      myHero:MoveTo(6623, 8649)
+    else
+      myHero:MoveTo(6623, 8649)
+      CastSpell(_Q, 6010.5869140625, 8508.8740234375)
+    end
 end
 
 function AutoLevel()
@@ -151,6 +181,9 @@ end
 
 function OnDraw()
     if myHero.dead then return end
+
+    DrawCircle(6623, 100, 8649, 100, ARGB(0, 102, 0, 0))
+    DrawCircle(11590.95, 100, 4656.26, 100, ARGB(0, 102, 0, 0))
 
     if (Menu.drawings.drawCircleAA) then
         DrawCircle(myHero.x, myHero.y, myHero.z, 655, ARGB(255, 0, 255, 0))
