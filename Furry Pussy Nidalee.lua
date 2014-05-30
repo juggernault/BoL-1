@@ -1,6 +1,6 @@
 --[[
  
-        Sniper Nidalee by Lillgoalie
+        Furry Pussy Nidalee by Lillgoalie
        
         Instructions on saving the file:
         - Save the file in scripts folder
