@@ -1,16 +1,6 @@
 --[[
 
-	Zilean The Evil Time Bomb by Lillgoalie [REWORKED]
-	Version: 1.3
-	
-	Features:
-	
-		- Combo Mode:
-			- Uses Q, W, Q , E (if E enabled in menu)
-			- Checks if Q is not available before using W
-		- Harass Mode:
-			- Uses QWQ combo if harass key pressed or autoharass is toggled.
-
+	Zilean The Evil Time Bomb by Lillgoalie
 	
 	Instructions on saving the file:
 	- Save the file in scripts folder
@@ -18,44 +8,60 @@
 --]]
 if myHero.charName ~= "Zilean" then return end
 
+require 'SOW'
+require 'VPrediction'
+
 local ts
+local VP = nil
 
 function OnLoad()
-	-- Create the menu
-	Config = scriptConfig("Zilean by Lillgoalie", "ZileanBL")
-	
-	Config:addSubMenu("["..myHero.charName.." - Combo]", "Combo")
-	Config.Combo:addParam("comboE", "Use E in combo", SCRIPT_PARAM_ONOFF, true)
-	Config.Combo:addParam("combo", "Combo mode", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-	
-	Config:addSubMenu("["..myHero.charName.." - Harass]", "Harass")
-	Config.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
-	Config.Harass:addParam("autoharass", "Auto Harass", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("A"))
-	
-	Config:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
-	Config.Ads:addParam("FarmR", "Farm R with W", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("U"))
-	Config.Ads:addParam("TravelMode", "Travel Mode", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("T"))
-
-	Config:addSubMenu("["..myHero.charName.." - Drawings]", "drawings")
-	Config.drawings:addParam("drawCircleAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
-	Config.drawings:addParam("drawCircleQ", "Draw Q Range", SCRIPT_PARAM_ONOFF, true)
-	Config.drawings:addParam("drawCircleR", "Draw R Range", SCRIPT_PARAM_ONOFF, true)
-	
 	-- Target Selector
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY,700)
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, 1200)
+
+	VP = VPrediction()
+
+	-- Create the menu
+	Menu = scriptConfig("Zilean by Lillgoalie", "ZileanBL")
+	Orbwalker = SOW(VP)
+    Menu:addTS(ts)
+    ts.name = "Focus"
+
+	Menu:addSubMenu("["..myHero.charName.." - Orbwalker]", "SOWorb")
+    Orbwalker:LoadToMenu(Menu.SOWorb)
+	
+	Menu:addSubMenu("["..myHero.charName.." - Combo]", "Combo")
+	Menu.Combo:addParam("combo", "Combo mode", SCRIPT_PARAM_ONKEYDOWN, false, 32)
+	Menu.Combo:addParam("comboE", "Use E on enemy in combo", SCRIPT_PARAM_ONOFF, true)
+	Menu.Combo:addParam("Eself", "Use E on yourself if out of range", SCRIPT_PARAM_ONOFF, true)
+	
+	Menu:addSubMenu("["..myHero.charName.." - Harass]", "Harass")
+	Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
+	Menu.Harass:addParam("autoharass", "Auto Harass", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("A"))
+	
+	Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
+	Menu.Ads:addParam("FarmR", "Farm R with W", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("U"))
+	Menu.Ads:addParam("TravelMode", "Travel Mode", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("T"))
+	Menu.Ads:addParam("lifesave", "Life saving Ultimate", SCRIPT_PARAM_ONOFF, true)
+	Menu.Ads:addParam("percenthp", "What % to ult", SCRIPT_PARAM_SLICE, 20, 0, 100, 0)
+
+	Menu:addSubMenu("["..myHero.charName.." - Drawings]", "drawings")
+	Menu.drawings:addParam("drawCircleAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
+	Menu.drawings:addParam("drawCircleQ", "Draw Q Range", SCRIPT_PARAM_ONOFF, true)
+	Menu.drawings:addParam("drawCircleR", "Draw R Range", SCRIPT_PARAM_ONOFF, true)
 	
 	-- Message
-	PrintChat("Loaded Zilean By Lillgoalie")
+	PrintChat("<font color = \"#33CCCC\">Zilean by</font> <font color = \"#fff8e7\">Lillgoalie</font>")
 end
 
 function OnTick()
 	-- Check for enemies repeatly
 	ts:update()
+	LifeSave()
 	
 	-- Enemy in range?
-	if (ts.target ~= nil) then
+	if (ts.target ~= nil) and ValidTarget(ts.target) then
 		-- Combo key pressed?
-		if (Config.Combo.combo) then
+		if (Menu.Combo.combo) then
 			-- Able to cast Q?
 			if (myHero:CanUseSpell(_Q) == READY) then
 				-- Cast spell on target
@@ -71,19 +77,25 @@ function OnTick()
 			end
 			
 			-- E in combo enabled?
-			if (Config.Combo.comboE) then
+			if (Menu.Combo.comboE) then
 				-- Able to cast E?
-				if (myHero:CanUseSpell(_E) == READY) then
+				if (myHero:CanUseSpell(_E) == READY) and GetDistance(ts.target) < 700 then
 					-- Cast spell on target
 					CastSpell(_E, ts.target)
+				end
+			end
+
+			if Menu.Combo.Eself then
+				if (myHero:CanUseSpell(_E) == READY) and GetDistance(ts.target) < 1200 and GetDistance(ts.target) > 700 then
+					CastSpell(_E, myHero)
 				end
 			end
 		end
 	end
 	
-	if (ts.target ~= nil) then
-		if (Config.Combo.combo == false) then
-			if (Config.Harass.harass) then
+	if (ts.target ~= nil) and ValidTarget(ts.target) then
+		if (Menu.Combo.combo == false) then
+			if (Menu.Harass.harass) then
 				if (myHero:CanUseSpell(_Q) == READY) then
 					CastSpell(_Q, ts.target)
 					else
@@ -96,9 +108,9 @@ function OnTick()
 		end
 	end
 	
-	if (ts.target ~= nil) then
-		if (Config.Combo.combo == false) then
-			if (Config.Harass.autoharass) then
+	if (ts.target ~= nil) and ValidTarget(ts.target) then
+		if (Menu.Combo.combo == false) then
+			if (Menu.Harass.autoharass) then
 				if (myHero:CanUseSpell(_Q) == READY) then
 					CastSpell(_Q, ts.target)
 					if (myHero:CanUseSpell(_Q) ~= READY) then
@@ -110,9 +122,9 @@ function OnTick()
 	end
 		
 	-- Combo key not pressed?
-	if (Config.Combo.combo == false) then
+	if (Menu.Combo.combo == false) then
 		-- Travel mode enabled in menu?
-		if (Config.Ads.TravelMode) then
+		if (Menu.Ads.TravelMode) then
 			-- E Ready?
 			if (myHero:CanUseSpell(_E) == READY) then
 				CastSpell(_E, myHero)
@@ -126,7 +138,7 @@ function OnTick()
 	end
 	
 	-- Is farming R enabled in menu?
-	if (Config.Ads.FarmR) then
+	if (Menu.Ads.FarmR) then
 		-- Is champion higher than level 6?
 		if (myHero.level >= 6) then
 			-- Can't use R?
@@ -139,18 +151,34 @@ function OnTick()
 			end
 		end
 	end
-			
+end
+
+function LifeSave()
+	if myHero.health < (myHero.maxHealth*(Menu.Ads.percenthp*0.01)) then
+		if myHero:CanUseSpell(_R) then
+			CastSpell(_R)
+		end
+	end
+
+	for i=1, heroManager.iCount do
+        local ally = heroManager:getHero(i)
+        if ally.team == myHero.team and ally.team ~= TEAM_ENEMY and myHero:CanUseSpell(_R) == READY and ally.health < (ally.maxHealth * (Menu.Ads.percenthp*0.01)) and GetDistance(myHero, ally) < 900 and ally ~= nil then
+            CastSpell(_R, ally)
+        end
+    end
 end
 
 function OnDraw()
 	--Draw Range if activated in menu
-		if (Config.drawings.drawCircleAA) then
-			DrawCircle(myHero.x, myHero.y, myHero.z, 600, ARGB(255, 0, 255, 0))
-		end
-		if (Config.drawings.drawCircleQ) then
-			DrawCircle(myHero.x, myHero.y, myHero.z, 700, 0x111111)
-		end
-		if (Config.drawings.drawCircleR) then
-			DrawCircle(myHero.x, myHero.y, myHero.z, 900, 0x111111)
-		end
+	if (Menu.drawings.drawCircleAA) then
+		DrawCircle(myHero.x, myHero.y, myHero.z, 600, ARGB(255, 0, 255, 0))
+	end
+
+	if (Menu.drawings.drawCircleQ) then
+		DrawCircle(myHero.x, myHero.y, myHero.z, 700, 0x111111)
+	end
+
+	if (Menu.drawings.drawCircleR) then
+		DrawCircle(myHero.x, myHero.y, myHero.z, 900, 0x111111)
+	end
 end
