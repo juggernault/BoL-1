@@ -47,6 +47,7 @@ function OnLoad()
      
     Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
     -- Menu.Ads:addParam("ks", "Killsteal with Q", SCRIPT_PARAM_ONOFF, true)
+    Menu.Ads:addParam("escape", "Escape key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
     Menu.Ads:addSubMenu("Auto Heal Settings", "AutoHeal")
     Menu.Ads.AutoHeal:addParam("HealNida", "Auto Heal Yourself", SCRIPT_PARAM_ONOFF, true)
     Menu.Ads.AutoHeal:addParam("NidaPercent", "What % to heal yourself", SCRIPT_PARAM_SLICE, 70, 0, 100, 0)
@@ -74,6 +75,7 @@ function OnTick()
 	Check()
 	Harass()
 	AutoHarass()
+	Escape()
 
 	--[[if Menu.Ads.ks then
 		NidaKillSteal()
@@ -118,7 +120,7 @@ function Harass()
 end
 
 function AutoHarass()
-	if ts.target ~= nil and ValidTarget(ts.target, 1400) and Menu.Harass.autoharass and NIDAHUMAN then
+	if ts.target ~= nil and ValidTarget(ts.target, 1400) and Menu.Harass.autoharass and NIDAHUMAN and not Recalling then
 		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 60, 1400, 1300, myHero, true)
 		if HitChance >= 2  and GetDistance(ts.target) <= 1400 and myHero:CanUseSpell(_Q) == READY then 
 			CastSpell(_Q, CastPosition.x, CastPosition.z)
@@ -209,6 +211,17 @@ function OnDeleteObj(obj)
 	if obj ~= nil then
 		if obj.name:find("TeleportHome.troy") then
 			Recalling = false
+		end
+	end
+end
+
+function Escape()
+	if Menu.Ads.escape then
+		myHero:MoveTo(mousePos.x, mousePos.z)
+		if myHero:CanUseSpell(_W) and NIDACOUGAR then
+			CastSpell(_W)
+		elseif NIDAHUMAN and myHero:CanUseSpell(_R) then
+			CastSpell(_R)
 		end
 	end
 end
