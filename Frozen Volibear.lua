@@ -9,6 +9,9 @@
 
 if myHero.charName ~= "Volibear" then return end
 
+require 'VPrediciton'
+require 'SOW'
+
 local ts
 local Menu
 
@@ -16,21 +19,28 @@ QRange, ERange, WRange, RRange = 600, 405, 400, 125
 player = GetMyHero()
 
 function OnLoad()
+	VP = VPrediction()
+
 	-- Target Selector
 	ts = TargetSelector(TARGET_LOW_HP_PRIORITY,700)
 
 	-- Create the menu
 	Menu = scriptConfig("Frozen Volibear by Lillgoalie", "FrozenVolibear")
 	
-	Menu:addTS(ts)
-	
-	Menu:addSubMenu("["..myHero.charName.." - VoliCombo]", "VoliCombo")
-	Menu.VoliCombo:addParam("combo", "VoliCombo mode", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-	Menu.VoliCombo:addParam("comboQ", "Use Q in VoliCombo", SCRIPT_PARAM_ONOFF, true)
-	Menu.VoliCombo:addParam("comboW", "Use W in VoliCombo", SCRIPT_PARAM_ONOFF, false)
-	Menu.VoliCombo:addParam("comboE", "Use E in VoliCombo", SCRIPT_PARAM_ONOFF, true)
+	Orbwalker = SOW(VP)
+    Menu:addTS(ts)
+    ts.name = "Focus"
+
+    Menu:addSubMenu("["..myHero.charName.." - Orbwalker]", "SOWorb")
+    Orbwalker:LoadToMenu(Menu.SOWorb)
+
+	Menu:addSubMenu("["..myHero.charName.." - Combo]", "VoliCombo")
+	Menu.VoliCombo:addParam("combo", "Combo mode", SCRIPT_PARAM_ONKEYDOWN, false, 32)
+	Menu.VoliCombo:addParam("comboQ", "Use Q in Combo", SCRIPT_PARAM_ONOFF, true)
+	Menu.VoliCombo:addParam("comboW", "Use W in Combo", SCRIPT_PARAM_ONOFF, false)
+	Menu.VoliCombo:addParam("comboE", "Use E in Combo", SCRIPT_PARAM_ONOFF, true)
 	Menu.VoliCombo:addSubMenu("Ultimate Settings", "Rset")
-	Menu.VoliCombo.Rset:addParam("comboR", "Use R in VoliCombo", SCRIPT_PARAM_ONOFF, true)
+	Menu.VoliCombo.Rset:addParam("comboR", "Use R in Combo", SCRIPT_PARAM_ONOFF, true)
 	Menu.VoliCombo.Rset:addParam("MinimumR", "Minimum enemies to ult", SCRIPT_PARAM_SLICE, 2, 1, 5, 0)
 	
 	Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
@@ -56,7 +66,7 @@ function OnTick()
 	-- VoliCombo key pressed?
 	if (Menu.VoliCombo.combo) then
 		-- Activate function VoliCombo
-		VoliCombo()
+		Volicombo()
 	end
 end
 
@@ -84,7 +94,7 @@ function Escape()
 	myHero:MoveTo(mousePos.x, mousePos.z)
 end
 			
-function VoliCombo()
+function Volicombo()
 	-- Can use spell, E in range and enabled?
 	if ValidTarget(ts.target, ERange) and myHero:CanUseSpell(_E) == READY and Menu.VoliCombo.comboE then
 		-- Cast E
