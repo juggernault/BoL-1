@@ -41,6 +41,7 @@ function OnLoad()
 	Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
 	Menu.Ads:addParam("FarmR", "Farm R with W", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("U"))
 	Menu.Ads:addParam("TravelMode", "Travel Mode", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("T"))
+	Menu.Ads:addParam("escape", "Escape key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
 	Menu.Ads:addParam("lifesave", "Life saving Ultimate", SCRIPT_PARAM_ONOFF, true)
 	Menu.Ads:addParam("percenthp", "What % to ult", SCRIPT_PARAM_SLICE, 20, 0, 100, 0)
 
@@ -56,7 +57,13 @@ end
 function OnTick()
 	-- Check for enemies repeatly
 	ts:update()
-	LifeSave()
+	if Menu.Ads.lifesave then
+		LifeSave()
+	end
+	
+	if Menu.Ads.escape then
+		Escape()
+	end
 	
 	-- Enemy in range?
 	if (ts.target ~= nil) and ValidTarget(ts.target) then
@@ -151,6 +158,13 @@ function OnTick()
 			end
 		end
 	end
+end
+
+function Escape()
+	if myHero:CanUseSpell(_E) then
+		CastSpell(_E, myHero)
+	end
+	myHero:MoveTo(mousePos.x, mousePos.z)
 end
 
 function LifeSave()
