@@ -71,7 +71,8 @@ function OnTick()
 	ts:update()
 	jungleMinions:update()
 	enemyMinions:update()
-	
+	Killsteal()
+
 	if Menu.Ads.escape then
 		Escape()
 	end
