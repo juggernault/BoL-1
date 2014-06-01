@@ -46,7 +46,7 @@ function OnLoad()
     Menu.Harass:addParam("autoharass", "Auto Harass", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("A"))
      
     Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
-    -- Menu.Ads:addParam("ks", "Killsteal with Q", SCRIPT_PARAM_ONOFF, true)
+    Menu.Ads:addParam("ks", "Killsteal with Q", SCRIPT_PARAM_ONOFF, true)
     Menu.Ads:addParam("escape", "Escape key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
     Menu.Ads:addSubMenu("Auto Heal Settings", "AutoHeal")
     Menu.Ads.AutoHeal:addParam("HealNida", "Auto Heal Yourself", SCRIPT_PARAM_ONOFF, true)
@@ -77,9 +77,9 @@ function OnTick()
 	AutoHarass()
 	Escape()
 
-	--[[if Menu.Ads.ks then
+	if Menu.Ads.ks then
 		NidaKillSteal()
-	end]]
+	end
 
 	if Menu.NidaCombo.combo and NIDACOUGAR then
 		cougarcombo()
@@ -260,15 +260,22 @@ function OnDraw()
     end
 end
 
---[[function NidaKillSteal()
+function NidaKillSteal()
 	for i=1, heroManager.iCount do
 		local enemy = heroManager:GetHero(i)
 		if ValidTarget(enemy) and Menu.Ads.ks then
-			qDmg = (myHero:CanUseSpell(_Q) == READY and getDmg("Q",enemy,myHero) or 0)
-			if enemy.health <= ((qDmg) + GetDistance(enemy) * 0.11) and GetDistance(enemy) <= QRange and myHero.CanUseSpell(_Q) == READY then
-				local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(enemy, 0.5, 70, 1200, 1300, myHero, true)
-				CastSpell(_Q, CastPosition.x, CastPosition.z)
+			qDmg = getDmg("Q",enemy,myHero) or 0
+			if (GetDistance(enemy) > 525) then
+				if enemy.health <= (qDmg * (0.01 * (GetDistance(enemy) * 0.166667))) and GetDistance(enemy) <= 1400 and myHero:CanUseSpell(_Q) == READY then
+					local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 60, 1400, 1300, myHero, true)
+					CastSpell(_Q, CastPosition.x, CastPosition.z)
+				end
+			elseif (GetDistance(enemy) < 525) then
+				if enemy.health <= qDmg and GetDistance(enemy) <= 1400 and myHero:CanUseSpell(_Q) == READY then
+					local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 60, 1400, 1300, myHero, true)
+					CastSpell(_Q, CastPosition.x, CastPosition.z)
+				end
 			end
 		end
 	end
-end]]
+end
