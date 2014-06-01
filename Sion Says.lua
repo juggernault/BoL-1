@@ -5,6 +5,7 @@ require 'SOW'
 
 local ts
 local QRange, WRange, ERange, RRange = 550, 450, 250, 250
+local EActive = false
 
 function OnLoad()
 	VP = VPrediction()
@@ -24,7 +25,6 @@ function OnLoad()
 	Menu.SionCombo:addParam("comboW", "Use W in Combo", SCRIPT_PARAM_ONOFF, true)
 	Menu.SionCombo:addParam("comboE", "Use E in Combo", SCRIPT_PARAM_ONOFF, true)
 	Menu.SionCombo:addParam("comboR", "Use R in Combo", SCRIPT_PARAM_ONOFF, true)
-	Menu.SionCombo:addParam("comboRRange", "Enemies in range for R", SCRIPT_PARAM_SLICE, 1, 1, 5, 0)
 	
 	Menu:addSubMenu("["..myHero.charName.." - Harass]", "Harass")
 	Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
@@ -33,7 +33,7 @@ function OnLoad()
 	Menu.Harass:addParam("harassW", "Use W in Harass", SCRIPT_PARAM_ONOFF, false)
 
 	Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
-	Menu.Ads:addParam("ks", "Killsteal with Q SOON", SCRIPT_PARAM_ONOFF, true)
+	Menu.Ads:addParam("ks", "Killsteal with Q", SCRIPT_PARAM_ONOFF, true)
 	
 	Menu:addSubMenu("["..myHero.charName.." - Drawings]", "drawings")
 	Menu.drawings:addParam("drawCircleAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
@@ -45,6 +45,7 @@ end
 
 function OnTick()
 	ts:update()
+	KS()
 
 	if Menu.SionCombo.combo then
 		Sioncombo()
@@ -57,21 +58,39 @@ function OnTick()
 	if Menu.Harass.autoharass then
 		autoHarass()
 	end
+
+	if Menu.Ads.farmE then
+		FarmClear()
+	end
+
+	if Menu.Ads.clearE then
+		FarmClear()
+	end
+end
+
+function OnGainBuff(myHero, buff)
+	if buff.name == "Enrage" then
+		EActive = true
+	end
+end
+
+function OnLoseBuff(myHero, buff)
+	if buff.name == "Enrage" then
+		EActive = false
+	end
 end
 
 function KS()
-	qDmg = getDmg(_Q, Target, myHero)
-    if Menu.Ads.ks then
-        if Target.health < qDmg then
-        	if GetDistance(Target, QRange) then
-        		if myHero:CanUseSpell(_Q) == READY then
-            		CastSpell(_Q, Target)
-            	end
-            end
-        end
-    end
+	for i=1, heroManager.iCount do
+		local enemy = heroManager:GetHero(i)
+		if ValidTarget(enemy) and Menu.Ads.ks then
+			qDmg = getDmg("Q",enemy,myHero) or 0
+			if enemy.health <= qDmg and GetDistance(enemy) <= QRange and myHero:CanUseSpell(_Q) == READY then
+				CastSpell(_Q, enemy)
+			end
+		end
+	end
 end
-
 
 function _harass()
 	if myHero:CanUseSpell(_Q) == READY and ValidTarget(ts.target, QRange) and Menu.Harass.harassQ then
@@ -102,7 +121,7 @@ function Sioncombo()
 		CastSpell(_W)
 	end
 
-	if myHero:CanUseSpell(_E) == READY and ValidTarget(ts.target, ERange) and Menu.SionCombo.comboE then
+	if myHero:CanUseSpell(_E) == READY and ValidTarget(ts.target, ERange) and Menu.SionCombo.comboE and not EActive then
 		CastSpell(_E)
 	end
 
