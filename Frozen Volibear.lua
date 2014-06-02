@@ -9,7 +9,7 @@
 
 if myHero.charName ~= "Volibear" then return end
 
-require 'VPrediciton'
+require 'VPrediction'
 require 'SOW'
 
 local ts
