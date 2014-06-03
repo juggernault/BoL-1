@@ -13,6 +13,7 @@ require 'VPrediction'
 
 local ts
 local VP = nil
+local Recalling
 
 function OnLoad()
 	-- Target Selector
@@ -117,7 +118,7 @@ function OnTick()
 	
 	if (ts.target ~= nil) and ValidTarget(ts.target) then
 		if (Menu.Combo.combo == false) then
-			if (Menu.Harass.autoharass) then
+			if (Menu.Harass.autoharass) and not Recalling then
 				if (myHero:CanUseSpell(_Q) == READY) then
 					CastSpell(_Q, ts.target)
 					if (myHero:CanUseSpell(_Q) ~= READY) then
@@ -165,6 +166,22 @@ function Escape()
 		CastSpell(_E, myHero)
 	end
 	myHero:MoveTo(mousePos.x, mousePos.z)
+end
+
+function OnCreateObj(obj)
+	if obj ~= nil then
+		if obj.name:find("TeleportHome.troy") then
+			Recalling = true
+		end 
+	end
+end
+
+function OnDeleteObj(obj)
+	if obj ~= nil then
+		if obj.name:find("TeleportHome.troy") then
+			Recalling = false
+		end
+	end
 end
 
 function LifeSave()
