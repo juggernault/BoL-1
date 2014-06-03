@@ -36,6 +36,7 @@ function OnLoad()
     Menu.NidaCombo.Qset:addParam("comboCougarQ", "Use Q in Cougar Combo", SCRIPT_PARAM_ONOFF, true)
     Menu.NidaCombo:addSubMenu("W Settings", "Wset")
     Menu.NidaCombo.Wset:addParam("comboW", "Use W in Human Combo", SCRIPT_PARAM_ONOFF, true)
+    Menu.NidaCombo.Wset:addParam("comboCougarW", "Use W in Cougar Combo", SCRIPT_PARAM_ONOFF, true)
     Menu.NidaCombo.Wset:addParam("Wstunned", "Only use W on stunned targets", SCRIPT_PARAM_ONOFF, true)
     Menu.NidaCombo:addSubMenu("E Settings", "Eset")
     Menu.NidaCombo.Eset:addParam("comboCougarE", "Use E in Cougar Combo", SCRIPT_PARAM_ONOFF, true)
@@ -110,6 +111,15 @@ function OnTick()
 	end
 end
 
+-- isFacing by Feez
+function isFacing(source, ourtarget, lineLength)
+	local sourceVector = Vector(source.visionPos.x, source.visionPos.z)
+	local sourcePos = Vector(source.x, source.z)
+	sourceVector = (sourceVector-sourcePos):normalized()
+	sourceVector = sourcePos + (sourceVector*(GetDistance(ourtarget, source)))
+	return GetDistanceSqr(ourtarget, {x = sourceVector.x, z = sourceVector.y}) <= (lineLength and lineLength^2 or 90000)
+end
+
 function Harass()
 	if ts.target ~= nil and ValidTarget(ts.target, 1400) and Menu.Harass.harass and NIDAHUMAN then
 		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 60, 1400, 1300, myHero, true)
@@ -159,9 +169,29 @@ function cougarcombo()
 		CastSpell(_Q)
 	end
 
-	if myHero:CanUseSpell(_E) == READY and Menu.NidaCombo.Eset.comboCougarE and ValidTarget(ts.target, 300) and ts.target ~= nil then
-		CastSpell(_E)
+	for i, target in pairs(GetEnemyHeroes()) do
+		if myHero:CanUseSpell(_E) == READY and Menu.NidaCombo.Eset.comboCougarE and ValidTarget(target, 300) and isFacing(myHero, target, 300) and ts.target ~= nil then
+			CastSpell(_E)
+		end
 	end
+
+	for i, target in pairs(GetEnemyHeroes()) do
+		if myHero:CanUseSpell(_W) == READY and target ~= nil and Menu.NidaCombo.Wset.comboCougarW and ValidTarget(target) and isFacing(myHero, target, 300) then
+			CastSpell(_W)
+		end
+	end
+
+	if not enemy then enemy = Target end
+        if not WREADY or (GetDistance(enemy) > Spells.WC.range) or (GetDistance(enemy) < 150)
+            then return false
+        end
+        if not NSOW:CanAttack() then
+            if ValidTarget(enemy) and isFacing(myHero, enemy, 100)
+                then CastSpell(_W)
+                return true
+            end
+        end
+        return false
 end
 
 
