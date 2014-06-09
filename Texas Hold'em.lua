@@ -22,6 +22,7 @@ local CurrentTimeGank = 0
 
 function OnLoad()
 	ts = TargetSelector(TARGET_LESS_CAST, 1450)
+	SelectGoldR = false
 
 	Menu = scriptConfig("[Twisted Fate] Texas Hold'em", "TFBL")
 	VP = VPrediction()
@@ -40,11 +41,6 @@ function OnLoad()
 	Menu.TFCombo.Qset:addParam("qHitChance", "Hitchance", SCRIPT_PARAM_SLICE, 2, 1, 4, 0)
 	Menu.TFCombo:addSubMenu("W Settings", "Wset")
 	Menu.TFCombo.Wset:addParam("autoW", "Auto W in combo [BETA]", SCRIPT_PARAM_ONOFF, false)
-	Menu.TFCombo.Wset:addParam("Wprio", "1=Gold 2=Blue 3=Red", SCRIPT_PARAM_SLICE, 2, 1, 3, 0)
-	Menu.TFCombo.Wset:addParam("WprioTwo", "1=Gold 2=Blue 3=Red", SCRIPT_PARAM_SLICE, 3, 1, 3, 0)
-	Menu.TFCombo.Wset:addParam("WprioThree", "1=Gold 2=Blue 3=Red", SCRIPT_PARAM_SLICE, 1, 1, 3, 0)
-	Menu.TFCombo.Wset:addParam("UseRed", "Use Red if hit enemies is atleast", SCRIPT_PARAM_SLICE, 2, 1, 5, 0)
-	Menu.TFCombo.Wset:addParam("UseBlue", "Use Blue if mana is less than %", SCRIPT_PARAM_SLICE, 20, 0, 100, 0)
 
 	Menu:addSubMenu("["..myHero.charName.." - Pick Card]", "Wsel")
 	Menu.Wsel:addParam("selectgold", "Select Gold", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
@@ -66,6 +62,7 @@ function OnLoad()
 	Menu.LaneClear:addParam("lclrMana", "Blue instead of red if mana % <", SCRIPT_PARAM_SLICE, 20, 0, 100, 0)
 
 	Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
+	Menu.Ads:addParam("goldR", "Select Gold Card When Using Ultimate", SCRIPT_PARAM_ONOFF, true)
 	Menu.Ads:addParam("notifyR", "Notify if enemy has selected HP percent in selected range", SCRIPT_PARAM_ONOFF, true)
 	Menu.Ads:addParam("notifyRange", "Notify Range", SCRIPT_PARAM_SLICE, 4500, 1, 5000, 0)
 	Menu.Ads:addParam("notifyPercent", "HP Percentage", SCRIPT_PARAM_SLICE, 25, 1, 100, 0)
@@ -93,6 +90,7 @@ function OnTick()
 	enemyMinions:update()
 	CardSelect()
 	NotifyGank()
+	UltGoldCard()
 	AdditionalTimeGank = os.clock()
 
 	if Menu.TFCombo.combo then
@@ -125,6 +123,25 @@ function NotifyGank()
 	end
 end
 
+function UltGoldCard()
+	if SelectGoldR == true then
+        if myHero:GetSpellData(_W).name == "goldcardlock" then
+            CastSpell(_W)
+        	SelectGoldR = false
+    	elseif myHero:GetSpellData(_W).name == "PickACard" then
+        	CastSpell(_W)
+        end
+    end
+end
+
+function OnProcessSpell(unit, spell)
+    if unit.isMe and spell.name == "gate" then 
+    	if Menu.Ads.goldR then 
+    		SelectGoldR = true
+    	end 
+    end
+end
+
 function HealthCheck(unit, HealthValue)
 	if unit.health < (unit.maxHealth * (HealthValue/100))
 		then return true 
@@ -150,7 +167,6 @@ function AutoHarass()
     	end
 	end
 end
-
 
 function OnCreateObj(obj)
 	if obj ~= nil then
@@ -190,126 +206,44 @@ function Laneclear()
 end
 
 function ComboTF()
+	if Menu.TFCombo.Wset.autoW then
+		ComboW()
+	end
+
 	if Menu.TFCombo.Qset.comboQ then
 		CastQ()
 	end
-
-	if Menu.TFCombo.Wset.autoW then
-		AutoW()
-	end
 end
 
-function AutoW()
-	if Menu.TFCombo.combo then
-		FirstPrio()
-		SecondPrio()
-		ThirdPrio()
-	end
-end
-
-function FirstPrio()
-	local Name = myHero:GetSpellData(_W).name
+function ComboW()
 	for i, Target in pairs(GetEnemyHeroes()) do
-		if Menu.TFCombo.Wset.Wprio == 3 then
-			if Target ~= nil and ValidTarget(Target, 900) then
-				local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(Target, 0, 80, 600, 2000, myHero)
-				if nTargets >= Menu.TFCombo.Wset.UseRed then
-					spellName = "redcardlock"
-					if Name == "PickACard" then
-						CastSpell(_W)
-					end
+		if myHero:GetSpellData(_W).name == "PickACard" and Target ~= nil and ValidTarget(Target, 900) then
+            CastSpell(_W)
+        end
+
+		if Target ~= nil and ValidTarget(Target, 900) then
+			local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(Target, 0, 80, 600, 2000, myHero)
+			if nTargets >= 2 then
+				spellName = "redcardlock"
+				if Name == "PickACard" then
+					CastSpell(_W)
 				end
 			end
 		end
-	end
 
-	if Menu.TFCombo.Wset.Wprio == 2 then
-		if (Menu.TFCombo.Wset.UseBlue*0.01)*myHero.maxMana < myHero.mana and CountEnemyHeroInRange(900) >= 1 then
+		if (0.25*myHero.maxMana) > myHero.mana and Target ~= nil and ValidTarget(Target, 900) then
 			spellName = "bluecardlock"
 			if Name == "PickACard" then
 				CastSpell(_W)
 			end
 		end
-	end
 
-	if Menu.TFCombo.Wset.Wprio == 1 and CountEnemyHeroInRange(900) >= 1 then
-		spellName = "goldcardlock"
-		if Name == "PickACard" then
-			CastSpell(_W)
-		end
-	end
-end
-
-function SecondPrio()
-	for i, Target in pairs(GetEnemyHeroes()) do
-		if Menu.TFCombo.Wset.WprioTwo == 3 then
-			if Target ~= nil and ValidTarget(Target, 900) then
-				local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(Target, 0, 80, 600, 2000, myHero)
-				if nTargets >= Menu.TFCombo.Wset.UseRed then
-					spellName = "redcardlock"
-					if Name == "PickACard" then
-						CastSpell(_W)
-					end
-				end
-			end
-		end
-	end
-
-	if Menu.TFCombo.Wset.WprioTwo == 2 then
-		if (Menu.TFCombo.Wset.UseBlue*0.01)*myHero.maxMana < myHero.mana and CountEnemyHeroInRange(900) >= 1 then
-			spellName = "bluecardlock"
+		if (0.25*myHero.maxMana) < myHero.mana and Target ~= nil and ValidTarget(Target, 900) then
+			spellName = "goldcardlock"
 			if Name == "PickACard" then
 				CastSpell(_W)
 			end
 		end
-	end
-
-	if Menu.TFCombo.Wset.WprioTwo == 1 and CountEnemyHeroInRange(900) >= 1 then
-		spellName = "goldcardlock"
-		if Name == "PickACard" then
-			CastSpell(_W)
-		end
-	end
-end
-
-function ThirdPrio()
-	for i, Target in pairs(GetEnemyHeroes()) do
-		if Menu.TFCombo.Wset.WprioTwo == 3 then
-			if Target ~= nil and ValidTarget(Target, 900) then
-				local AOECastPosition, MainTargetHitChance, nTargets = VP:GetCircularAOECastPosition(Target, 0, 80, 600, 2000, myHero)
-				if nTargets >= Menu.TFCombo.Wset.UseRed then
-					spellName = "redcardlock"
-					if Name == "PickACard" then
-						CastSpell(_W)
-					end
-				end
-			end
-		end
-	end
-
-	if Menu.TFCombo.Wset.WprioThree == 2 then
-		if (Menu.TFCombo.Wset.UseBlue*0.01)*myHero.maxMana < myHero.mana and CountEnemyHeroInRange(900) >= 1 then
-			spellName = "bluecardlock"
-			if Name == "PickACard" then
-				CastSpell(_W)
-			end
-		end
-	end
-
-	if Menu.TFCombo.Wset.WprioThree == 1 and CountEnemyHeroInRange(900) >= 1 then
-		spellName = "goldcardlock"
-		if Name == "PickACard" then
-			CastSpell(_W)
-		end
-	end
-end
-
-function CastQ()
-	if ts.target ~= nil and ValidTarget(ts.target) then
-    	local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 80, Menu.TFCombo.Qset.qRange, 1450, myHero, false)
-    	if HitChance >= Menu.TFCombo.Qset.qHitChance and GetDistance(CastPosition) < Menu.TFCombo.Qset.qRange then
-        	CastSpell(_Q, CastPosition.x, CastPosition.z)
-    	end
 	end
 end
 
@@ -318,14 +252,26 @@ function CardSelect()
 
 	if Menu.Wsel.selectblue then
 		SelectCard = "Blue"
+	else
+		if not Menu.Wsel.selectred and not Menu.Wsel.selectgold then
+			SelectCard = nil
+		end
 	end
 
 	if Menu.Wsel.selectred then
 		SelectCard = "Red"
+	else
+		if not Menu.Wsel.selectblue and not Menu.Wsel.selectgold then
+			SelectCard = nil
+		end
 	end
 
 	if Menu.Wsel.selectgold then
 		SelectCard = "Gold"
+	else
+		if not Menu.Wsel.selectred and not Menu.Wsel.selectblue then
+			SelectCard = nil
+		end
 	end
 
 	if SelectCard == "Blue" then
