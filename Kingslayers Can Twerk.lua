@@ -67,7 +67,7 @@ function OnTick()
 	if Menu.Ads.ksQ then
 		for i, target in pairs(GetEnemyHeroes()) do
         	local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.5, 70, 700, 1000, myHero, false)
-        	if HitChance >= 2 and GetDistance(CastPosition) < 700 and target.health =< qDmg and myHero:CanUseSpell(_Q) == READY then
+        	if HitChance >= 2 and GetDistance(CastPosition) < 700 and target.health <= qDmg and myHero:CanUseSpell(_Q) == READY then
            		CastSpell(_Q, CastPosition.x, CastPosition.z)
            	end
 		end
@@ -75,7 +75,7 @@ function OnTick()
 
 	if Menu.Ads.ksR then
 		for i, target in pairs(GetEnemyHeroes()) do
-			if target.health =< rDmg and GetDistance(Target) =< 650 and not ultActive then
+			if target.health <= rDmg and GetDistance(Target) <= 650 and not ultActive then
 				CastSpell(_R, target) 
 			end
 		end
