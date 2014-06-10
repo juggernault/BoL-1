@@ -22,8 +22,6 @@ function OnLoad()
 	Menu = scriptConfig("[Jarvan IV] Kingslayers Can Twerk", "TTKBL")
 	VP = VPrediction()
 	Orbwalker = SOW(VP)
-	Menu:addTS(ts)
-    ts.name = "Focus"
 	
 	Menu:addSubMenu("["..myHero.charName.." - Orbwalker]", "SOWorb")
 	Orbwalker:LoadToMenu(Menu.SOWorb)
@@ -37,6 +35,7 @@ function OnLoad()
 	Menu:addSubMenu("["..myHero.charName.." - Harass]", "Harass")
 	Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
 	Menu.Harass:addParam("autoharass", "Auto-Harass", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("A"))
+	Menu.Harass:addParam("ahMana", "Auto-Harass if mana is over %", SCRIPT_PARAM_SLICE, 20, 0, 100, 0)
 
 	Menu:addSubMenu("["..myHero.charName.." - Laneclear]", "LaneClear")
 	Menu.LaneClear:addParam("laneClear", "Laneclear with spells", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("V"))
@@ -45,8 +44,6 @@ function OnLoad()
 
 	Menu:addSubMenu("["..myHero.charName.." - Additionals]", "Ads")
 	Menu.Ads:addParam("EQcommand", "Key for EQ combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("c"))
-	Menu.Ads:addParam("ksQ", "Killsteal using Q", SCRIPT_PARAM_ONOFF, true)
-	Menu.Ads:addParam("ksR", "Killsteal using R", SCRIPT_PARAM_ONOFF, false)
 
 	Menu:addSubMenu("["..myHero.charName.." - Drawings]", "drawings")
 	Menu.drawings:addParam("drawCircleAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
@@ -64,23 +61,6 @@ function OnTick()
 	if myHero.dead then return end
 	enemyMinions:update()
 
-	if Menu.Ads.ksQ then
-		for i, target in pairs(GetEnemyHeroes()) do
-        	local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.5, 70, 700, 1000, myHero, false)
-        	if HitChance >= 2 and GetDistance(CastPosition) < 700 and target.health <= qDmg and myHero:CanUseSpell(_Q) == READY then
-           		CastSpell(_Q, CastPosition.x, CastPosition.z)
-           	end
-		end
-	end
-
-	if Menu.Ads.ksR then
-		for i, target in pairs(GetEnemyHeroes()) do
-			if target.health <= rDmg and GetDistance(Target) <= 650 and not ultActive then
-				CastSpell(_R, target) 
-			end
-		end
-	end
-
 	if Menu.JCombo.combo then
 		JarvanCombo()
 	end
@@ -89,7 +69,7 @@ function OnTick()
 		mousePosEQ()
 	end
 
-	if Menu.Ads.laneclearQ and Menu.Ads.laneClear then
+	if Menu.LaneClear.laneclearQ and Menu.LaneClear.laneClear then
 		lclr()
 	end
 
@@ -105,7 +85,7 @@ end
 function useHarass()
 	for i, target in pairs(GetEnemyHeroes()) do
         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.5, 70, 700, 1000, myHero, false)
-        if HitChance >= 2 and GetDistance(CastPosition) < 700 and myHero:CanUseSpell(_Q) == READY then
+        if target ~= nil and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 700 and myHero:CanUseSpell(_Q) == READY then
            	CastSpell(_Q, CastPosition.x, CastPosition.z)
         end
 	end
@@ -114,7 +94,7 @@ end
 function useAutoHarass()
 	for i, target in pairs(GetEnemyHeroes()) do
         local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.5, 70, 700, 1000, myHero, false)
-        if HitChance >= 2 and GetDistance(CastPosition) < 700 and myHero:CanUseSpell(_Q) == READY then
+        if target ~= nil and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 700 and myHero:CanUseSpell(_Q) == READY and ManaCheck(myHero, Menu.Harass.ahMana) then
            	CastSpell(_Q, CastPosition.x, CastPosition.z)
         end
 	end
@@ -122,9 +102,11 @@ end
 
 function lclr()
 	for i, minion in pairs(enemyMinions.objects) do
-		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(minion, 0.5, 70, 700, 1000, myHero, false)
-        if HitChance >= 2 and GetDistance(CastPosition) < 700 and myHero:CanUseSpell(_Q) == READY and ManaCheck(myHero, Menu.LaneClear.lclrMana) then
-           	CastSpell(_Q, CastPosition.x, CastPosition.z)
+		if minion ~= nil and ValidTarget(minion, 700) then
+        	local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(minion, 0.5, 70, 700, 1000, myHero, false)
+        	if HitChance >= 2 and GetDistance(CastPosition) < 700 and myHero:CanUseSpell(_Q) == READY and ManaCheck(myHero, Menu.LaneClear.lclrMana) then
+           		CastSpell(_Q, CastPosition.x, CastPosition.z)
+        	end
         end
     end
 end
@@ -158,7 +140,7 @@ function ComboEQ()
 		if Menu.JCombo.comboSaveEQ then
 			for i, target in pairs(GetEnemyHeroes()) do
         		local CastPosition,  HitChance,  Position = VP:GetCircularCastPosition(target, 0.5, 70, 800, 1000)
-        		if HitChance >= 2 and GetDistance(CastPosition) < 800 and myHero:CanUseSpell(_E) == READY and myHero:CanUseSpell(_Q) == READY then
+        		if target ~= nil and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 800 and myHero:CanUseSpell(_E) == READY and myHero:CanUseSpell(_Q) == READY then
             		CastSpell(_E, CastPosition.x, CastPosition.z)
            			CastSpell(_Q, CastPosition.x, CastPosition.z)
         		end
@@ -166,7 +148,7 @@ function ComboEQ()
 		else
 			for i, target in pairs(GetEnemyHeroes()) do
         		local CastPosition,  HitChance,  Position = VP:GetCircularCastPosition(target, 0.5, 70, 800, 1000)
-        		if HitChance >= 2 and GetDistance(CastPosition) < 800 then
+        		if target ~= nil and ValidTarget(target) and HitChance >= 2 and GetDistance(CastPosition) < 800 then
             		CastSpell(_E, CastPosition.x, CastPosition.z)
            			CastSpell(_Q, CastPosition.x, CastPosition.z)
            		end
