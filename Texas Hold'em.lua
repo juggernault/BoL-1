@@ -215,6 +215,15 @@ function ComboTF()
 	end
 end
 
+function CastQ()
+	if ts.target ~= nil and ValidTarget(ts.target) then
+    	local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 80, Menu.TFCombo.Qset.qRange, 1450, myHero, false)
+    	if HitChance >= Menu.TFCombo.Qset.qHitChance and GetDistance(CastPosition) < Menu.TFCombo.Qset.qRange then
+        	CastSpell(_Q, CastPosition.x, CastPosition.z)
+    	end
+	end
+end
+
 function ComboW()
 	for i, Target in pairs(GetEnemyHeroes()) do
 		if myHero:GetSpellData(_W).name == "PickACard" and Target ~= nil and ValidTarget(Target, 900) then
