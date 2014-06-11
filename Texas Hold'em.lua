@@ -40,7 +40,7 @@ function OnLoad()
 	Menu.TFCombo.Qset:addParam("qRange", "Use Q if target is in selected range", SCRIPT_PARAM_SLICE, 1200, 1, 1450, 0)
 	Menu.TFCombo.Qset:addParam("qHitChance", "Hitchance", SCRIPT_PARAM_SLICE, 2, 1, 4, 0)
 	Menu.TFCombo:addSubMenu("W Settings", "Wset")
-	Menu.TFCombo.Wset:addParam("autoW", "Auto W in combo [BETA]", SCRIPT_PARAM_ONOFF, false)
+	Menu.TFCombo.Wset:addParam("autoW", "Auto W in combo [BETA]", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.." - Pick Card]", "Wsel")
 	Menu.Wsel:addParam("selectgold", "Select Gold", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
@@ -72,6 +72,7 @@ function OnLoad()
 	Menu.drawings:addParam("drawCircleQ", "Draw Q Range", SCRIPT_PARAM_ONOFF, true)
 	Menu.drawings:addParam("drawCircleW", "Draw W Range", SCRIPT_PARAM_ONOFF, true)
 	Menu.drawings:addParam("drawCircleR", "Draw R Range", SCRIPT_PARAM_ONOFF, true)
+	Menu.drawings:addParam("drawMinimapCircleR", "Draw R Range on Minimap", SCRIPT_PARAM_ONOFF, true)
 
 	Menu.Wsel:permaShow("selectgold")
 	Menu.Wsel:permaShow("selectblue")
@@ -324,7 +325,11 @@ function OnDraw()
 	end
 
 	if Menu.drawings.drawCircleR then
-		DrawCircle(myHero.x, myHero.y, myHero.z, 5000, 0x111111)
+		DrawCircle(myHero.x, myHero.y, myHero.z, 5500, 0x111111)
+	end
+
+	if Menu.drawings.drawMinimapCircleR and myHero.level >= 6 then
+		DrawCircleMinimap(myHero.x, myHero.y, myHero.z, 5500)
 	end
 
 	if DRAWGANKTEXT or ((AdditionalTimeGank-CurrentTimeGank) <= 2) then
