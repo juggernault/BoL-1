@@ -19,7 +19,7 @@ local VP = nil
 function OnLoad()
     VP = VPrediction()
             -- Target Selector
-    ts = TargetSelector(TARGET_LESS_CAST, 1400)
+    ts = TargetSelector(TARGET_LESS_CAST, 1500)
                    
     Menu = scriptConfig("Furry Pussy Nidalee by Lillgoalie", "NidaleeBL")
     Orbwalker = SOW(VP)
@@ -122,7 +122,7 @@ end
 
 function Harass()
 	if ts.target ~= nil and ValidTarget(ts.target, 1400) and Menu.Harass.harass and NIDAHUMAN then
-		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 60, 1400, 1300, myHero, true)
+		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 30, 1400, 1300, myHero, true)
 		if HitChance >= 2  and GetDistance(ts.target) <= 1400 and myHero:CanUseSpell(_Q) == READY then 
 			CastSpell(_Q, CastPosition.x, CastPosition.z)
 		end
@@ -131,7 +131,7 @@ end
 
 function AutoHarass()
 	if ts.target ~= nil and ValidTarget(ts.target, 1400) and Menu.Harass.autoharass and NIDAHUMAN and not Recalling then
-		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 60, 1400, 1300, myHero, true)
+		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 30, 1400, 1300, myHero, true)
 		if HitChance >= 2  and GetDistance(ts.target) <= 1400 and myHero:CanUseSpell(_Q) == READY then 
 			CastSpell(_Q, CastPosition.x, CastPosition.z)
 		end
@@ -170,28 +170,25 @@ function cougarcombo()
 	end
 
 	for i, target in pairs(GetEnemyHeroes()) do
-		if myHero:CanUseSpell(_E) == READY and Menu.NidaCombo.Eset.comboCougarE and ValidTarget(target, 300) and isFacing(myHero, target, 300) and ts.target ~= nil then
-			CastSpell(_E)
+		if myHero:CanUseSpell(_E) == READY and Menu.NidaCombo.Eset.comboCougarE and ValidTarget(target, 300) and ts.target ~= nil then
+			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 200, 290, 1800, myHero, false)
+			if HitChance >= 2  and GetDistance(ts.target) <= 290 and myHero:CanUseSpell(_E) == READY then 
+				CastSpell(_E, CastPosition.x, CastPosition.z)
+			end
 		end
 	end
 
 	for i, target in pairs(GetEnemyHeroes()) do
-		if myHero:CanUseSpell(_W) == READY and target ~= nil and Menu.NidaCombo.Wset.comboCougarW and ValidTarget(target) and isFacing(myHero, target, 300) then
-			CastSpell(_W)
+		if myHero:CanUseSpell(_W) == READY and target ~= nil and Menu.NidaCombo.Wset.comboCougarW and ValidTarget(target) then
+			CastSpell(_W, mousePos.x, mousePos.z)
 		end
 	end
 
-	if not enemy then enemy = Target end
-        if not WREADY or (GetDistance(enemy) > Spells.WC.range) or (GetDistance(enemy) < 150)
-            then return false
-        end
-        if not NSOW:CanAttack() then
-            if ValidTarget(enemy) and isFacing(myHero, enemy, 100)
-                then CastSpell(_W)
-                return true
-            end
-        end
-        return false
+	for i, target in pairs(GetEnemyHeroes()) do
+		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 200, 290, 1800, myHero, true)
+		if HitChance >= 2  and GetDistance(ts.target) <= 290 and myHero:CanUseSpell(_E) == READY then 
+			CastSpell(_E, CastPosition.x, CastPosition.z)
+		end
 end
 
 
@@ -207,7 +204,7 @@ end
 
 function ComboQ()
 	if ts.target ~= nil and ValidTarget(ts.target, 1400) and Menu.NidaCombo.Qset.comboQ then
-		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 60, 1400, 1300, myHero, true)
+		local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(ts.target, 0.5, 30, 1400, 1300, myHero, true)
 		if HitChance >= 2  and GetDistance(ts.target) <= 1400 and myHero:CanUseSpell(_Q) == READY then 
 			CastSpell(_Q, CastPosition.x, CastPosition.z)
 		end
@@ -249,7 +246,7 @@ function Escape()
 	if Menu.Ads.escape then
 		myHero:MoveTo(mousePos.x, mousePos.z)
 		if myHero:CanUseSpell(_W) and NIDACOUGAR then
-			CastSpell(_W)
+			CastSpell(_W, mousePos.x, mousePos.z)
 		elseif NIDAHUMAN and myHero:CanUseSpell(_R) then
 			CastSpell(_R)
 		end
@@ -290,6 +287,7 @@ function OnDraw()
     end
 end
 
+--[[
 function NidaKillSteal()
 	for i=1, heroManager.iCount do
 		local enemy = heroManager:GetHero(i)
@@ -309,3 +307,4 @@ function NidaKillSteal()
 		end
 	end
 end
+]]
