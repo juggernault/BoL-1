@@ -189,6 +189,7 @@ function cougarcombo()
 		if HitChance >= 2  and GetDistance(ts.target) <= 290 and myHero:CanUseSpell(_E) == READY then 
 			CastSpell(_E, CastPosition.x, CastPosition.z)
 		end
+	end
 end
 
 
