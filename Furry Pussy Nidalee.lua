@@ -78,9 +78,9 @@ function OnTick()
 	AutoHarass()
 	Escape()
 
-	if Menu.Ads.ks then
+	--[[ if Menu.Ads.ks then
 		NidaKillSteal()
-	end
+	end ]]
 
 	if Menu.NidaCombo.combo and NIDACOUGAR then
 		cougarcombo()
@@ -109,15 +109,6 @@ function OnTick()
 	if Menu.Ads.AutoHeal.HealNida or Menu.Ads.AutoHeal.HealAllies then
 		Autoheal()
 	end
-end
-
--- isFacing by Feez
-function isFacing(source, ourtarget, lineLength)
-	local sourceVector = Vector(source.visionPos.x, source.visionPos.z)
-	local sourcePos = Vector(source.x, source.z)
-	sourceVector = (sourceVector-sourcePos):normalized()
-	sourceVector = sourcePos + (sourceVector*(GetDistance(ourtarget, source)))
-	return GetDistanceSqr(ourtarget, {x = sourceVector.x, z = sourceVector.y}) <= (lineLength and lineLength^2 or 90000)
 end
 
 function Harass()
