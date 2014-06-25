@@ -1,13 +1,6 @@
 --[[
 
     Nami Tsunami by Lillgoalie
-    Version: 1.0
-    
-    Features:
-        - Combo Mode using VPrediction
-        - Harass
-        - Auto Harass
-        - Auto Heal
 
     
     Instructions on saving the file:
@@ -15,17 +8,17 @@
     
 --]]
 
+if myHero.charName ~= "Nami" then return end
+
 require 'VPrediction'
 require 'SOW'
 
-if myHero.charName ~= "Nami" then return end
-
 local ts
 
-local QRange, QSpeed, QDelay, QRadius = 865, 1750, 0.55, 200
+local QRange, QSpeed, QDelay, QRadius = 865, 1750, 0.55, 250
 local WRange = 725
 local ERange = 800
-local RSpeed, RDelay, RRadius = 1200, 0.5, 590
+local RSpeed, RDelay, RRadius = 1200, 0.5, 700
 
 local VP = nil
 
@@ -35,27 +28,25 @@ local abilitySequence = {1, 2, 3, 2, 2, 4, 2, 3, 2, 3, 4, 3, 3, 1, 1, 4, 1, 1}
 -- Code -------------------------------------------
 
 function OnLoad()
-    local VP = VPrediction()
+    VP = VPrediction()
     Orbwalker = SOW(VP)
-    ts = TargetSelector(TARGET_LESS_CAST, 2400)
+    ts = TargetSelector(TARGET_LESS_CAST, 900)
 
     Menu = scriptConfig("Nami Tsunami", "NamiBL")
-
-    Menu:addTS(ts)
-    ts.name = "Target Selector"
 
     Menu:addSubMenu("["..myHero.charName.." - Orbwalker]", "SOWorb")
     Orbwalker:LoadToMenu(Menu.SOWorb)
 
     Menu:addSubMenu("["..myHero.charName.." - Combo]", "NamiCombo")
-    Menu.NamiCombo:addParam("combo", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-    Menu.NamiCombo:addParam("useQ", "Use Q in combo", SCRIPT_PARAM_ONOFF, true)
-    Menu.NamiCombo:addParam("useW", "Use W in combo", SCRIPT_PARAM_ONOFF, true)
-    Menu.NamiCombo:addParam("useE", "Use E in combo", SCRIPT_PARAM_ONOFF, true)
-    Menu.NamiCombo:addSubMenu("Ultimate settings", "Rset")
-    Menu.NamiCombo.Rset:addParam("comboR", "Use Ultimate in combo", SCRIPT_PARAM_ONOFF, true)
-    Menu.NamiCombo.Rset:addParam("RuseRange", "Range to use ultimate", SCRIPT_PARAM_SLICE, 1000, 0, 2200, 0)
-    Menu.NamiCombo.Rset:addParam("MinimumR", "Minimum enemies to ultimate on", SCRIPT_PARAM_SLICE, 1, 1, 5, 0)
+    Menu.NamiCombo:addParam("combo", "Combo mode", SCRIPT_PARAM_ONKEYDOWN, false, 32)
+    Menu.NamiCombo:addSubMenu("Q Settings", "qSet")
+    Menu.NamiCombo.qSet:addParam("useQ", "Use Q in combo", SCRIPT_PARAM_ONOFF, true) 
+    Menu.NamiCombo:addSubMenu("E Settings", "eSet")
+    Menu.NamiCombo.eSet:addParam("useE", "Use E in combo", SCRIPT_PARAM_ONOFF, true)
+    Menu.NamiCombo:addSubMenu("R Settings", "rSet") 
+    Menu.NamiCombo.rSet:addParam("useR", "Use R in combo", SCRIPT_PARAM_ONOFF, true)
+    Menu.NamiCombo.rSet:addParam("RuseRange", "Range to use ultimate", SCRIPT_PARAM_SLICE, 1000, 0, 2200, 0)
+    Menu.NamiCombo.rSet:addParam("MinimumR", "Minimum enemies to ultimate on", SCRIPT_PARAM_SLICE, 1, 1, 5, 0)
 
     Menu:addSubMenu("["..myHero.charName.." - Harass]", "NamiHarass")
     Menu.NamiHarass:addParam("Harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
@@ -71,6 +62,10 @@ function OnLoad()
     Menu.Ads.AutoHeal:addParam("HealAllies", "Auto Heal Allies", SCRIPT_PARAM_ONOFF, false)
     Menu.Ads.AutoHeal:addParam("AllyPercent", "What % to heal allies", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
 
+    Menu:addSubMenu("["..myHero.charName.." - Target Selector]", "targetSelector")
+    Menu.targetSelector:addTS(ts)
+    ts.name = "Focus"
+
     Menu:addSubMenu("["..myHero.charName.." - Drawings]", "drawings")
     Menu.drawings:addParam("drawCircleAA", "Draw AA Range", SCRIPT_PARAM_ONOFF, true)
     Menu.drawings:addParam("drawCircleQ", "Draw Q Range", SCRIPT_PARAM_ONOFF, true)
@@ -83,7 +78,7 @@ function OnTick()
     ts:update()
 
     if Menu.NamiCombo.combo then
-        Combobombo()
+        ComboMode()
     end
 
     if Menu.NamiHarass.Harass then
@@ -97,25 +92,73 @@ function OnTick()
     if Menu.Ads.AutoLevelspells then
         AutoLevel()
     end
+
+    if Menu.Ads.AutoHeal.HealNami then
+        AutoHealNami()
+    end
+
+    if Menu.Ads.AutoHeal.HealAllies then
+        AutoHealAllies()
+    end
+end
+
+function AutoHealNami()
+    if myHero:CanUseSpell(_W) and Menu.Ads.AutoHeal.HealNami and HealthCheck(myHero, Menu.Ads.AutoHeal.NamiPercent) then
+        CastSpell(_W, myHero)
+    end
+end
+
+function AutoHealAllies()
+    for i, ally in ipairs(GetAllyHeroes()) do
+        if ally ~= nil and GetDistance(ally) < WRange and not ally.dead and ally.visible and myHero:CanUseSpell(_W) == READY and Menu.Ads.AutoHeal.HealAllies and HealthCheck(ally, Menu.Ads.AutoHeal.AllyPercent) then
+            CastSpell(_W, ally)
+        end
+    end
 end
 
 function harass()
     if Menu.NamiHarass.QHarass then
-        UseQ()
+        for i, target in pairs(GetEnemyHeroes()) do
+            if target ~= nil and ValidTarget(target, QRange) then
+                if myHero:CanUseSpell(_Q) == READY then
+                    local CastPosition,  HitChance,  Position = VP:GetCircularCastPosition(target, QDelay, QRadius, QRange, QSpeed)
+                    if HitChance >= 2 and GetDistance(CastPosition) < QRange then
+                        CastSpell(_Q, CastPosition.x, CastPosition.z)
+                    end
+                end
+            end
+        end
     end
 
     if Menu.NamiHarass.WHarass then
-        UseW()
+        for i, target in pairs(GetEnemyHeroes()) do
+            if target ~= nil and ValidTarget(target, WRange) and myHero:CanUseSpell(_W) == READY then
+                CastSpell(_W, target)
+            end
+        end
     end
 end
 
 function autoharass()
-   if Menu.NamiHarass.QHarass then
-        UseQ()
+    if Menu.NamiHarass.QHarass then
+        for i, target in pairs(GetEnemyHeroes()) do
+            if target ~= nil and ValidTarget(target, QRange) then
+                if myHero:CanUseSpell(_Q) == READY then
+                    local CastPosition,  HitChance,  Position = VP:GetCircularCastPosition(target, QDelay, QRadius, QRange, QSpeed)
+                    if HitChance >= 2 and GetDistance(CastPosition) < QRange then
+                        CastSpell(_Q, CastPosition.x, CastPosition.z)
+                    end
+                end
+            end
+        end
     end
 
     if Menu.NamiHarass.WHarass then
-        UseW()
+        for i, target in pairs(GetEnemyHeroes()) do
+            if target ~= nil and ValidTarget(target, WRange) and myHero:CanUseSpell(_W) == READY then
+                CastSpell(_W, target)
+            end
+        end
     end
 end
 
@@ -133,7 +176,7 @@ function AutoLevel()
     end
 end
 
-function Combobombo()
+function ComboMode()
     if Menu.NamiCombo.combo then
         UseR()
         UseQ()
@@ -143,10 +186,10 @@ function Combobombo()
 end
 
 function UseR()
-    if ValidTarget(ts.target, Menu.NamiCombo.Rset.RuseRange) and myHero:CanUseSpell(_R) == READY and Menu.NamiCombo.Rset.comboR then
-        for i, target in pairs(GetEnemyHeroes()) do
-            local AOECastPosition, MainTargetHitChance, nTargets = VPrediction:GetLineAOECastPosition(ts.target, RDelay, RRadius, Menu.NamiCombo.Rset.RuseRange, RSpeed, myHero)
-            if MainTargetHitChance >= 2 and GetDistance(AOECastPosition) < Menu.NamiCombo.Rset.RuseRange and nTargets >= Menu.NamiCombo.Rset.MinimumR then
+    for i, target in pairs(GetEnemyHeroes()) do
+        if target ~= nil and ValidTarget(target) then
+            local AOECastPosition, MainTargetHitChance, nTargets = VP:GetLineAOECastPosition(target, RDelay, RRadius, Menu.NamiCombo.rSet.RuseRange, RSpeed, myHero)
+            if MainTargetHitChance >= 2 and GetDistance(AOECastPosition) < Menu.NamiCombo.rSet.RuseRange and nTargets >= Menu.NamiCombo.rSet.MinimumR and myHero:CanUseSpell(_R) == READY and Menu.NamiCombo.rSet.useR then
                 CastSpell(_R, AOECastPosition.x, AOECastPosition.z)
             end
         end
@@ -154,46 +197,43 @@ function UseR()
 end
 
 function UseQ()
-    if ValidTarget(ts.target, QRange) and myHero:CanUseSpell(_Q) == READY and Menu.NamiCombo.comboQ then
-        for i, target in pairs(GetEnemyHeroes()) do
-            local AOECastPosition, MainTargetHitChance, nTargets = VPrediction:GetLineAOECastPosition(ts.target, QDelay, QRadius, Q, QSpeed)
-            if MainTargetHitChance >= 2 and GetDistance(AOECastPosition) < QRange then
-                CastSpell(_Q, AOECastPosition.x, AOECastPosition.z)
-            end
+    if ts.target ~= nil and ValidTarget(ts.target, QRange) and myHero:CanUseSpell(_Q) == READY and Menu.NamiCombo.qSet.useQ then
+        local CastPosition,  HitChance,  Position = VP:GetCircularCastPosition(ts.target, QDelay, QRadius, QRange, QSpeed)
+        if HitChance >= 2 and GetDistance(CastPosition) < QRange then
+            CastSpell(_Q, CastPosition.x, CastPosition.z)
         end
     end
 end
 
 function UseW()
-    if ValidTarget(ts.target, WRange) and myHero:CanUseSpell(_W) == READY then
+    if ts.target ~= nil and ValidTarget(ts.target, WRange) and myHero:CanUseSpell(_W) == READY then
         CastSpell(_W, ts.target)
+    end
+end
 
-    elseif ValidTarget(ts.target, ERange) and myHero:CanUseSpell(_W) == READY then
-        for i = 1, heroManager.iCount do
-            local hero = heroManager:GetHero(i)
-            if hero.team ~= myHero.team then
-                if GetDistance(hero, ts.target) < 400 then
-                    CastSpell(_W, hero)
-                end
+function UseE()
+    for i, ally in ipairs(GetAllyHeroes()) do
+        if ally ~= nil and GetDistance(ally) < 800 and not ally.dead and ally.visible and myHero:CanUseSpell(_E) == READY and Menu.NamiCombo.eSet.useE then
+            CastSpell(_E, ally)
+        else
+            if ts.target ~= nil and ValidTarget(ts.target, 625) then
+                CastSpell(_E, myHero)
             end
         end
     end
 end
 
-function UseE()
-    if ValidTarget(ts.target, ERange) then
-        for i = 1, heroManager.iCount do
-        local hero = heroManager:GetHero(i)
-            if hero.team == myHero.team and myHero:CanUseSpell(_E) == READY and Menu.NamiCombo.comboE then
-                CastSpell(_E, hero)
-            end
-        end
+function HealthCheck(unit, HealthValue)
+    if unit.health < (unit.maxHealth * (HealthValue/100))
+        then return true
+    else
+        return false
     end
 end
 
 function OnDraw()
     if Menu.drawings.drawCircleR then
-        DrawCircle(myHero.x, myHero.y, myHero.z, Menu.NamiCombo.Rset.RuseRange, 0x111111)
+        DrawCircle(myHero.x, myHero.y, myHero.z, Menu.NamiCombo.rSet.RuseRange, 0x111111)
     end     
     
     if Menu.drawings.drawCircleQ then
@@ -201,6 +241,6 @@ function OnDraw()
     end
     
     if Menu.drawings.drawCircleAA then
-        DrawCircle(myHero.x, myHero.y, myHero.z, 550, ARGB(255, 0, 255, 0))
+        DrawCircle(myHero.x, myHero.y, myHero.z, 675, ARGB(255, 0, 255, 0))
     end
 end
