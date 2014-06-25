@@ -39,12 +39,13 @@ function OnLoad()
     Menu.FioraCombo:addSubMenu("R Settings", "rSet") 
     Menu.FioraCombo.rSet:addParam("useR", "Use R in combo", SCRIPT_PARAM_ONOFF, true)
     -- Menu.FioraCombo.rSet:addParam("useROn", "Use R on # amount of enemies", SCRIPT_PARAM_SLICE, 1, 1, 5, 0)
-  
+	--[[
     Menu:addSubMenu("["..myHero.charName.." - Harass]", "Harass")
     Menu.Harass:addParam("harass", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("G"))
     Menu.Harass:addParam("autoharass", "Auto-Harass", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("A"))
     Menu.Harass:addParam("UseQ", "Use Q in Harass", SCRIPT_PARAM_ONOFF, true)
     Menu.Harass:addParam("UseE", "Use E in Harass", SCRIPT_PARAM_ONOFF, false)
+	]]
 
     Menu:addSubMenu("["..myHero.charName.." - Laneclear]", "Laneclear")
     Menu.Laneclear:addParam("lclr", "Laneclear Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("V"))
