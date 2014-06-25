@@ -270,9 +270,9 @@ end
         
 function KSR()
     for i, enemy in ipairs(GetEnemyHeroes()) do
-        qDmg = getDmg("R", enemy, myHero)
+        rDmg = getDmg("R", enemy, myHero)
                 
-        if QREADY and enemy ~= nil and ValidTarget(enemy, 600) and enemy.health < qDmg then
+        if RREADY and enemy ~= nil and ValidTarget(enemy, 600) and enemy.health < rDmg then
             CastSpell(_R, enemy)
         end
     end
