@@ -1,5 +1,5 @@
 --[[
-    Faggot Fiora by Lillgoalie & ELSN
+    Fiora The Legspreader by Lillgoalie & ELSN
 ]]
 
 if myHero.charName ~= "Fiora" then return end
@@ -23,7 +23,7 @@ function OnLoad()
     ts = TargetSelector(TARGET_LESS_CAST, qRange)
     Orbwalker = SOW(VP)
     
-    Menu = scriptConfig("Faggot Fiora by Lillgoalie & ELSN", "FioraBLELSN")
+    Menu = scriptConfig("Fiora The Legspreader", "FioraTLS")
     
     Menu:addSubMenu("["..myHero.charName.." - Orbwalker]", "SOWorb")
     Orbwalker:LoadToMenu(Menu.SOWorb) 
@@ -76,7 +76,7 @@ function OnLoad()
     enemyMinions = minionManager(MINION_ENEMY, qRange, myHero, MINION_SORT_MAXHEALTH_DEC)
     jungleMinions = minionManager(MINION_JUNGLE, qRange, myHero, MINION_SORT_MAXHEALTH_DEC)
            
-    PrintChat("<font color = \"#33CCCC\">Faggot Fiora by</font> <font color = \"#fff8e7\">Lillgoalie</font> <font color = \"#33CCCC\">&</font> <font color = \"#fff8e7\">ELSN</font>")
+    PrintChat("<font color = \"#33CCCC\">Fiora The Legspreader by</font> <font color = \"#fff8e7\">Lillgoalie</font> <font color = \"#33CCCC\">&</font> <font color = \"#fff8e7\">ELSN</font>")
 end
 
 function OnTick()
