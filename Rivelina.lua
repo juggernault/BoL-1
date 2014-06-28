@@ -8,7 +8,7 @@ if myHero.charName ~= "Riven" then return end
 
 
 local version = 0.5
-local AUTOUPDATE = false
+local AUTOUPDATE = true
 
 -------------------------------------------------------------------------------------------------------------------------------
 local SCRIPT_NAME = "Rivelina"
